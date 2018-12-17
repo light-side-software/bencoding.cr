@@ -1,6 +1,6 @@
 # bencoding.cr
 
-Bencoding serializatio library using annotations.
+Bencoding serialization library using annotations.
 
 ## Installation
 

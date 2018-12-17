@@ -8,7 +8,7 @@ Bencoding serialization library using annotations.
 ```yaml
 dependencies:
   bencoding:
-    github: TamasSzekeres/bencoding.cr
+    github: light-side-software/bencoding.cr
 ```
 2. Run `shards install`
 
@@ -20,7 +20,7 @@ require "bencoding"
 
 ## Contributing
 
-1. Fork it (<https://github.com/TamasSzekeres/bencoding.cr/fork>)
+1. Fork it (<https://github.com/light-side-software/bencoding.cr/fork>)
 2. Create your feature branch (`git checkout -b my-new-feature`)
 3. Commit your changes (`git commit -am 'Add some feature'`)
 4. Push to the branch (`git push origin my-new-feature`)

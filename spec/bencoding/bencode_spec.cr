@@ -1,5 +1,4 @@
 require "../spec_helper"
-require "../fixtures/color"
 
 describe Bencoding do
   it "should encode Bool" do

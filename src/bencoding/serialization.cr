@@ -30,7 +30,7 @@ module Bencoding
 
   module Serializable
 
-macro included
+    macro included
       # Define a `new` directly in the included type,
       # so it overloads well with other possible initializes
 
@@ -55,9 +55,9 @@ macro included
       {% for ivar in @type.instance_vars %}
         {% ann = ivar.annotation(::Bencoding::Field) %}
         {% unless ann.is_a?(NilLiteral) %}
-          @{{ivar.name}} = parser.read_any.as({{ivar.type}})
+          @{{ivar.name}} = {{ivar.type}}.new(parser)
         {% else %}
-          # unknown field
+          @{{ivar.name}} = {{ivar.type}}.new(parser)
         {% end %}
       {% end %}
     end
@@ -68,7 +68,7 @@ macro included
         {% unless ann.is_a?(NilLiteral) %}
           @{{ivar.name}}.bencode(builder)
         {% else %}
-          # unknown field
+          @{{ivar.name}}.bencode(builder)
         {% end %}
       {% end %}
     end
@@ -97,34 +97,31 @@ macro included
     end
 
     def initialize(*, __parser_for_bencoding parser : ::Bencoding::Parser)
-      list = parser.read_list
-      i = 0
+      parser.read_begin_list
       {% for ivar in @type.instance_vars %}
         {% ann = ivar.annotation(::Bencoding::Field) %}
-        {% unless ann.is_a?(NilLiteral) %}
-          @{{ivar.name}} = list[{{ i }}].as({{ivar.type}})
-          i += 1
-        {% else %}
-          # unknown field
+        {% ignore = ann && ann[:ignore].is_a?(BoolLiteral) ? ann[:ignore] : false %}
+        {% unless ignore %}
+          @{{ivar.name}} = {{ivar.type}}.new(parser)
         {% end %}
       {% end %}
+      parser.read_end_list
     end
 
     def bencode(builder : ::Bencoding::Builder)
       builder.list do
         {% for ivar in @type.instance_vars %}
           {% ann = ivar.annotation(::Bencoding::Field) %}
-          {% unless ann.is_a?(NilLiteral) %}
+          {% ignore = ann && ann[:ignore].is_a?(BoolLiteral) ? ann[:ignore] : false %}
+          {% unless ignore %}
             @{{ivar.name}}.bencode(builder)
-          {% else %}
-            # unknown field
           {% end %}
         {% end %}
       end
     end
   end
 
-  module Serializable::Hash
+  module Serializable::Dictionary
     macro included
       # Define a `new` directly in the included type,
       # so it overloads well with other possible initializes
@@ -147,27 +144,29 @@ macro included
     end
 
     def initialize(*, __parser_for_bencoding parser : ::Bencoding::Parser)
-      dict = parser.read_dictionary
+      parser.read_begin_dictionary
       {% for ivar in @type.instance_vars %}
         {% ann = ivar.annotation(::Bencoding::Field) %}
-        {% unless ann.is_a?(NilLiteral) %}
-          @{{ivar.name}} = dict[{{ivar.name.stringify}}].as({{ivar.type}})
-        {% else %}
-          # unknown field
+        {% ignore = ann && ann[:ignore].is_a?(BoolLiteral) ? ann[:ignore] : false %}
+        {% key = ann && ann[:key].is_a?(StringLiteral) ? ann[:key] : ivar.name %}
+        {% unless ignore %}
+          key = parser.read_string
+          @{{ivar.name}} = {{ivar.type}}.new(parser)
         {% end %}
       {% end %}
+      parser.read_end_dictionary
     end
 
     def bencode(builder : ::Bencoding::Builder)
       builder.dictionary do
         {% for ivar in @type.instance_vars %}
           {% ann = ivar.annotation(::Bencoding::Field) %}
-          {% unless ann.is_a?(NilLiteral) %}
-            builder.field {{ivar.name.stringify}} do
+          {% ignore = ann && ann[:ignore].is_a?(BoolLiteral) ? ann[:ignore] : false %}
+          {% key = ann && ann[:key].is_a?(StringLiteral) ? ann[:key] : ivar.name %}
+          {% unless ignore %}
+            builder.field {{key}} do
               @{{ivar.name}}.bencode(builder)
             end
-          {% else %}
-            # unknown field
           {% end %}
         {% end %}
       end

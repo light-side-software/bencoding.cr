@@ -1,0 +1,9 @@
+name: bencoding
+version: 0.1.0
+
+authors:
+  - Tamás Szekeres <szektam2@gmail.com>
+
+crystal: 0.27.0
+
+license: MIT
